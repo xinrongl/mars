@@ -1,0 +1,10 @@
+# folder
+data/
+
+# cache
+.ipynb_checkpoints/
+.vscode/
+
+# files
+*.pth
+!.gitkeep
