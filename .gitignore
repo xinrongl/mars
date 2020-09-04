@@ -7,4 +7,8 @@ data/
 
 # files
 *.pth
-!.gitkeep
+*.log
+
+# ignore
+!data/.gitkeep
+!data/train/label.csv

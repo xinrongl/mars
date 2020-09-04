@@ -1,4 +1,5 @@
 import argparse
+import os
 from datetime import datetime
 from pathlib import Path
 
@@ -22,6 +23,7 @@ args = parser.parse_args()
 timestamp = datetime.now()
 model_path = Path(f"./models/{timestamp: %Y%m%d%H%M}")
 model_path.mkdir(exist_ok=True, parents=True)
+
 
 logger = Logger(level="DEBUG")
 logger.set_stream_handler(level="INFO")
@@ -49,3 +51,7 @@ train_loader = DataLoader(
 )
 
 model = Res_Unet(n_channels=3, n_classes=1)
+
+os.system("git add .")
+os.system("git commit -m 'finish training'")
+os.system("git push origin master")
