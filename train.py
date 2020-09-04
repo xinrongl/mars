@@ -94,7 +94,7 @@ def train_loop(
     for epoch in range(epochs):
         logger.info(f"Epoch: {epoch} LR: {lr_scheduler.get_last_lr()}")
         train_score = train(
-            train_loader, model, criterion, optimizer, epoch, model_path, logging=True
+            train_loader, model, criterion, optimizer, epoch, model_path
         )
 
         lr_scheduler.step()
@@ -121,7 +121,7 @@ def train_loop(
     return np.asarray(train_acc_history), np.asarray(val_acc_history)
 
 
-def train(train_loader, model, criterion, optimizer):
+def train(train_loader, model, criterion, optimizer, epoch, model_path):
     batch_time = AverageMeter("Time", ":6.3f")
     losses = AverageMeter("Loss", ":.4e")
     avg_f1 = AverageMeter("F1", ":6.2f")
@@ -230,12 +230,19 @@ model = nn.DataParallel(model)
 model.to(device)
 
 criterion = nn.BCELoss()
-optimizer = nn.Adam(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
-lr_scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
-    optimizer, mode="min", factor=0.2, patience=5, verbose=False
+optimizer = torch.optim.Adam(
+    model.parameters(), lr=args.lr, weight_decay=args.weight_decay
 )
+lr_scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=5, gamma=0.1)
 train_res, val_res = train_loop(
-    args.epochs, train_loader, val_loader, model, criterion, optimizer, lr_scheduler
+    args.num_epochs,
+    train_loader,
+    val_loader,
+    model,
+    criterion,
+    optimizer,
+    lr_scheduler,
+    model_path,
 )
 
 os.system("git add .")
