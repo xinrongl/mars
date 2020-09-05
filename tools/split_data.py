@@ -1,37 +1,43 @@
+# split data according to segmentation-models-pytorch
 import random
 from pathlib import Path
+import shutil
+import sys
 
 
-file_dir = Path("data/train")
-image_id = set(
-    map(
-        lambda x: str(x.parts[-1]).replace("_mask", "").split(".")[0],
-        file_dir.rglob("*.jpg"),
+file_dir = Path(sys.argv[1])  # data/train
+image_id = list(
+    set(
+        map(
+            lambda x: str(x.parts[-1]).replace("_mask", "").split(".")[0],
+            file_dir.rglob("*.jpg"),
+        )
     )
 )
 
-pos_image_list, neg_image_list = [], []
-for id in image_id:
-    if file_dir.joinpath(id + "_mask.jpg").exists():
-        pos_image_list.append(id)
-    else:
-        neg_image_list.append(id)
+x_train_dir = file_dir.joinpath("train")
+y_train_dir = file_dir.joinpath("trainannot")
+x_val_dir = file_dir.joinpath("val")
+y_val_dir = file_dir.joinpath("valannot")
+dirs = [x_train_dir, x_val_dir, y_train_dir, y_val_dir]
+for d in dirs:
+    d.mkdir(exist_ok=True, parents=True)
 
 random.seed(1234)
-random.shuffle(pos_image_list)
-random.seed(1234)
-random.shuffle(neg_image_list)
+random.shuffle(image_id)
+split_index = int(0.8 * len(image_id))
+for i, image_id in enumerate(image_id):
+    try:
+        image_fname = f"{image_id}.jpg"
+        mask_fname = f"{image_id}_mask.jpg"
 
-with open(file_dir.joinpath("label.csv"), "w") as f:
-    f.write("id,label,mode\n")
-
-    for i, pos_id in enumerate(pos_image_list):
-        if i <= int(0.8 * len(pos_image_list)):
-            f.write(pos_id + ",1,train\n")
+        if i <= split_index:
+            shutil.move(
+                file_dir.joinpath(image_fname), x_train_dir.joinpath(image_fname)
+            )
+            shutil.move(file_dir.joinpath(mask_fname), y_train_dir.joinpath(mask_fname))
         else:
-            f.write(pos_id + ",1,val\n")
-    for j, neg_id in enumerate(neg_image_list):
-        if j <= int(0.8 * len(neg_image_list)):
-            f.write(neg_id + ",0,train\n")
-        else:
-            f.write(neg_id + ",0,val\n")
+            shutil.move(file_dir.joinpath(image_fname), x_val_dir.joinpath(image_fname))
+            shutil.move(file_dir.joinpath(mask_fname), y_val_dir.joinpath(mask_fname))
+    except FileNotFoundError:
+        print(f"image id {image_id} not found")
